@@ -1,6 +1,26 @@
 # DNS-Data-NAS-Service
 Mise en place d'un serveur NAS / Backup
 
+## Décryptage du message subliminal
+**NAS is not a backup !**
+Je vous rejoins complètement dans cet analyse!!!
+
+*Je me demande du coup pourquoi je fais se travaille...
+Bon pour ce code au départ je suis parti un peu loin en pensant à un Vigenère...
+Mais non juste un XOR suffisait.*
+
+```python
+from operator import xor
+
+l=['16','0E','01','78','26','21','78','21','3D','2C','6F','33','78','2D','33','3B','24','27','28','6F','73']         47 key='XOR'*7
+key = 'XOR' * 7
+msg = ''
+for k in range(len(l)):
+     msg += chr(xor(int(l[k],16),int(ord(key[k]))))
+print(msg)
+```
+
+
 ## Les besoins
 Serveur NAS:
 - OS: Debian 12.2 (installation minimale)
