@@ -3,6 +3,7 @@ Mise en place d'un serveur NAS / Backup
 
 ## Décryptage du message subliminal
 **NAS is not a backup !**
+
 Je vous rejoins complètement dans cet analyse!!!
 
 *Je me demande du coup pourquoi je fais se travaille...
@@ -12,7 +13,7 @@ Mais non juste un XOR suffisait.*
 ```python
 from operator import xor
 
-l=['16','0E','01','78','26','21','78','21','3D','2C','6F','33','78','2D','33','3B','24','27','28','6F','73']         47 key='XOR'*7
+l=['16','0E','01','78','26','21','78','21','3D','2C','6F','33','78','2D','33','3B','24','27','28','6F','73']
 key = 'XOR' * 7
 msg = ''
 for k in range(len(l)):
