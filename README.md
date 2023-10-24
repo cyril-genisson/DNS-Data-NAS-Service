@@ -25,7 +25,7 @@ Serveur de Backup:
 - Services complémentaires:
     - rsync pour la synchronisation des sauvegardes
 
-## Choix pour la simulation:
+## Choix pour la simulation et installation du laboratoire:
 - Environnement: VirtualBox 7.0.12 + Extension Pack
 - Debian 12.2 x64
 - Hardware:
@@ -46,4 +46,22 @@ des disques:
 Une fois terminer l'installation de cette première machine, on la clone intégralement
 en veillant à changer les adresses MAC et en conserver le nom et les UUIDs des disques.
 
-
+On finit enfin par installer un serveur ssh sur chaque machine pour gérer l'installation
+depuis notre poste Contrôleur:
+```bash
+sudo apt install ssh -y &&
+systemctl status ssh
+● ssh.service - OpenBSD Secure Shell server
+     Loaded: loaded (/lib/systemd/system/ssh.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2023-10-24 16:57:11 CEST; 2min 7s ago
+       Docs: man:sshd(8)
+             man:sshd_config(5)
+    Process: 550 ExecStartPre=/usr/sbin/sshd -t (code=exited, status=0/SUCCESS)
+   Main PID: 582 (sshd)
+      Tasks: 1 (limit: 4645)
+     Memory: 9.2M
+        CPU: 126ms
+     CGroup: /system.slice/ssh.service
+             └─582 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
+```
+Super une bonne chose de faite.
