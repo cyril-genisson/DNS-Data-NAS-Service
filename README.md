@@ -44,7 +44,7 @@ Serveur NAS:
 Serveur de Backup:
 - même configuration que le serveur NAS
 - Services complémentaires:
-    - rsync pour la synchronisation des sauvegardes
+    - rsync pour la gestion des sauvegardes
 
 En analysant les besoins, on peut rapidement remarquer où sont les points de
 défaillance critiques:
