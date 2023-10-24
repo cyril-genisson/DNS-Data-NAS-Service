@@ -46,6 +46,20 @@ Serveur de Backup:
 - Services complémentaires:
     - rsync pour la synchronisation des sauvegardes
 
+En analysant les besoins, on peut rapidement remarquer où sont les points de
+défaillance critiques:
+- le système d'exploitation n'est pas protégé (2 JBOSS en raid 1 auraient été mieux),
+- le raid 6 tolère 2 disques en échec au maximum et ramène la dimension du stockage à 15Go au lieu des 21
+initialement prévu,
+- les 3 disques de 1To en bonus ne servent à rien car non intégrable au raid par la suite. Si le client vient
+à s'en servir (et il le fera) il n'aura aucune solution de secours hormis ce deuxième NAS-Backup qui ne sert à rien
+puisque lui aussi aura vieillit en même temps que le premier (hmm, obsolescence programmée quand tu nous tiens).
+
+La conclusion de ce merveilleux travail, avant même de l'avoir commencé, c'est que le client finira par se retourner
+contre notre prometteuse petite PME, et tout cela parce que Paul nous demande de faire de la m....
+
+Bon, c'est le chef! Et puisque l'on obéit au chef, alors au travail!!!
+
 ## Choix pour la simulation et installation du laboratoire:
 - Environnement: VirtualBox 7.0.12 + Extension Pack
 - Debian 12.2 x64
