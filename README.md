@@ -4,7 +4,7 @@ Mise en place d'un serveur NAS / Backup
 ## Décryptage du message subliminal
 **NAS is not a backup !**
 
-Je vous rejoins complètement dans cet analyse!!!
+Je vous rejoins complètement dans cette analyse!!!
 
 *Je me demande du coup pourquoi je fais ce travail...*
 Bon pour ce code au départ je suis parti un peu loin en pensant à un Vigenère...
