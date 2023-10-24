@@ -6,9 +6,10 @@ Mise en place d'un serveur NAS / Backup
 
 Je vous rejoins complètement dans cet analyse!!!
 
-*Je me demande du coup pourquoi je fais se travaille...
+*Je me demande du coup pourquoi je fais ce travail...*
 Bon pour ce code au départ je suis parti un peu loin en pensant à un Vigenère...
-Mais non juste un XOR suffisait.*
+Mais non juste un XOR suffisait, comme quoi l'idée la plus simple est souvent la
+meilleure.
 
 ```python
 from operator import xor
@@ -20,7 +21,6 @@ for k in range(len(l)):
      msg += chr(xor(int(l[k],16),int(ord(key[k]))))
 print(msg)
 ```
-
 
 ## Les besoins
 Serveur NAS:
@@ -85,4 +85,4 @@ systemctl status ssh
      CGroup: /system.slice/ssh.service
              └─582 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
 ```
-Super une bonne chose de faite.
+Super! Une bonne chose de faite.
