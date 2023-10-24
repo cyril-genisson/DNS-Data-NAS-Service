@@ -36,3 +36,14 @@ Serveur de Backup:
 - Pas d'utilisateur root
 - Un utilisateur -> Kaman kaman G:kaman,sudo
 
+L'installation de la première machine étant terminée on ajoute l'ensembles
+des disques:
+- 7 * 3Go pour le RAID 6
+- 3 * 1Go pour le LVM (en standbye)
+
+![ConfigNasVB](./pictures/ConfigNasVB.jpg "Configuration de la machine virtuelle NAS")
+
+Une fois terminer l'installation de cette première machine, on la clone intégralement
+en veillant à changer les adresses MAC et en conserver le nom et les UUIDs des disques.
+
+
