@@ -314,3 +314,93 @@ ALLYANT,Amin,Admin
 CAUTPUTMA,Medhi,User
 LIRRTIRY,Celestin,Admin
 ```
+```bash
+groupadd Admin
+groupadd User
+```
+
+Puis passage à la moulinette par notre script CreateUser. Pour le test le mot de passe de tous les utilisateurs
+est générique: **abcd**.
+
+D'autre part, les utilisateurs Admin/User n'ont pas à se connecter à un shell sur le NAS, donc je prends
+l'initiative de ne pas leur affecter d'interpréteur et ils n'auront pas de répertoire personnel sur le NAS.
+
+```bash
+#!/bin/bash
+
+NEWUSERFILE=$1
+
+# Le fichier csv est composé de 3 champs
+# Nom,Prénom,Role
+#
+
+for ENTRY in $(cat $NEWUSERFILE.csv | grep -v ^NOM)
+do
+    FIRSTNAME=$(echo $ENTRY | cut -d, -f2)
+	LASTNAME=$(echo $ENTRY | cut -d, -f1)
+	ROLE=$(echo $ENTRY | cut -d, -f3)
+	
+    echo $FIRSTNAME $LASTNAME $PASSWORD $ROLE
+
+	# Nettoyage des caractères accentués pour la génération du nom d'utilisateur
+	NORMFIRST=$(echo $FIRSTNAME | sed 'y/àâçéèëêïîöôùüûÀÇÉÈËÊÏÎÖÔÙÜÛ/aaceeeeiioouuuACEEEEIIOOUUU/')
+	NORMLAST=$(echo $LASTNAME | sed 'y/àâçéèëêïîöôùüûÀÇÉÈËÊÏÎÖÔÙÜÛ/aaceeeeiioouuuACEEEEIIOOUUU/')
+    
+    # Normalisation du nom d'utilisateur    
+	FIRSTINITIAL=$(echo $NORMFIRST | cut -c 1 | tr 'A-Z' 'a-z')
+	LOWERLASTNAME=$(echo $NORMLAST | tr -d \' | tr 'A-Z' 'a-z')
+	ACCTNAME=$FIRSTINITIAL$LOWERLASTNAME
+	
+    # Tests pour les doublons
+	id $ACCTNAME
+    if [ $? -eq 0 ]; then
+        continue
+	else
+		# Création du compte et affectation au groupe
+		echo "Création de l'utilisateur $ACCTNAME $ROLE"
+        useradd -c "$FIRSTNAME $LASTNAME" -s /bin/null $ACCTNAME
+        if [ "$ROLE" = "Admin" ] ; then
+            echo "L'utilisateur $ACCTNAME est un Administrateur: ajout au groupe Admin"
+            usermod -aG Admin $ACCTNAME
+        else
+            echo "L'utilistateur $ACCTNAME est un User standard: ajout au groupe User"
+            usermod -aG User $ACCTNAME
+        fi
+		echo "$ACCTNAME:abcd" | chpasswd
+        echo "$ACCTNAME $PASSWD $ROLE" >> create.txt # pour pouvoir nettoyer le système durant les tests et après par la même occasion.
+	fi
+done
+exit 0
+```
+
+```bash
+./CreateUser user.csv
+Jeanluc EDDIE User
+id: « jeddie » : utilisateur inexistant
+Création de l'utilisateur jeddie User
+useradd : Attention : shell '/dev/null' manquant ou non-exécutable
+L'utilistateur jeddie est un User standard: ajout au groupe User
+Amin ALLYANT Admin
+id: « aallyant » : utilisateur inexistant
+Création de l'utilisateur aallyant Admin
+useradd : Attention : shell '/dev/null' manquant ou non-exécutable
+L'utilisateur aallyant est un Administrateur: ajout au groupe Admin
+Medhi CAUTPUTMA User
+id: « mcautputma » : utilisateur inexistant
+Création de l'utilisateur mcautputma User
+useradd : Attention : shell '/dev/null' manquant ou non-exécutable
+L'utilistateur mcautputma est un User standard: ajout au groupe User
+Celestin LIRRTIRY Admin
+id: « clirrtiry » : utilisateur inexistant
+Création de l'utilisateur clirrtiry Admin
+useradd : Attention : shell '/dev/null' manquant ou non-exécutable
+L'utilisateur clirrtiry est un Administrateur: ajout au groupe Admin
+```
+On vérifie si tout c'est bien passé mais il n'y a pas de raison non?
+```bash
+cat /etc/group | grep Admin
+Admin:x:1001:aallyant,clirrtiry
+
+cat /etc/group | grep User
+User:x:1002:jeddie,mcautputma
+```
