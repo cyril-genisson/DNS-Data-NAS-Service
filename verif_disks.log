@@ -1,0 +1,100 @@
+--------------------------------------
+-     DISK: /dev/sdb
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: D3CEBC36-C2C3-4B97-A178-7793731338FE
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdc
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: 7912A599-2095-49A6-AA4F-77D978B585BE
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdd
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: 3F1C395D-B343-4590-B1F0-EB71DE608B6B
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sde
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: 34753FE1-49B8-418E-B4D5-EC00A94F40B9
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdf
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: 866633CD-4876-4265-870F-7550D213F38B
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdg
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: D756C9AC-5422-4B04-B333-25FFA149D0FC
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdh
+--------------------------------------
+Partition GUID code: A19D880F-05FC-4D3B-A006-743F0F84911E (Linux RAID)
+Partition unique GUID: F9B9CAD0-C238-485D-8AD9-C645F9E07DC2
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 6291422 (at 3.0 GiB)
+Partition size: 6289375 sectors (3.0 GiB)
+Attribute flags: 0000000000000000
+Partition name: 'RAID'
+--------------------------------------
+-     DISK: /dev/sdi
+--------------------------------------
+Partition GUID code: E6D6D379-F507-44C2-A23C-238F2A3DF928 (Linux LVM)
+Partition unique GUID: F881C9CC-10E1-4FFA-B9E2-21917C028CBA
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 2097118 (at 1024.0 MiB)
+Partition size: 2095071 sectors (1023.0 MiB)
+Attribute flags: 0000000000000000
+Partition name: 'LVM'
+--------------------------------------
+-     DISK: /dev/sdj
+--------------------------------------
+Partition GUID code: E6D6D379-F507-44C2-A23C-238F2A3DF928 (Linux LVM)
+Partition unique GUID: 5042A365-BB29-413E-ABCA-3B92485E972C
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 2097118 (at 1024.0 MiB)
+Partition size: 2095071 sectors (1023.0 MiB)
+Attribute flags: 0000000000000000
+Partition name: 'LVM'
+--------------------------------------
+-     DISK: /dev/sdk
+--------------------------------------
+Partition GUID code: E6D6D379-F507-44C2-A23C-238F2A3DF928 (Linux LVM)
+Partition unique GUID: 0C26AC21-E3A7-4149-BD81-B35E9496F35A
+First sector: 2048 (at 1024.0 KiB)
+Last sector: 2097118 (at 1024.0 MiB)
+Partition size: 2095071 sectors (1023.0 MiB)
+Attribute flags: 0000000000000000
+Partition name: 'LVM'

@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# Filename: PrepaDisks
+# Created: 25/10/2023
+#
+# Description: prépare la configuration disque du client
+#
+
+for k in {b..h}; do
+        sgdisk --new=1:0:0 --typecode=1:fd00 --change-name=1:"RAID" /dev/sd$k
+done
+
+for k in {i..k}; do
+        sgdisk --new=1:0:0 --typecode=1:8e00 --change-name=1:"LVM" /dev/sd$k
+done
+
+for k in {b..k}; do
+        sgdisk -i 1 /dev/sd$k >> verif_disks.log
+done
