@@ -404,3 +404,179 @@ Admin:x:1001:aallyant,clirrtiry
 cat /etc/group | grep User
 User:x:1002:jeddie,mcautputma
 ```
+
+### Installation du service NFS
+
+Comme à notre habitude un petit apt install s'impose:
+
+```bash
+apt install -y nfs-kernel-server nfs-common nfs4-acl-tools
+systemctl status nfs-kernel-server
+● nfs-server.service - NFS server and services
+     Loaded: loaded (/lib/systemd/system/nfs-server.service; enabled; preset: enabled)
+     Active: active (exited) since Wed 2023-10-25 22:18:27 CEST; 34s ago
+   Main PID: 19114 (code=exited, status=0/SUCCESS)
+        CPU: 17ms
+```
+Bien on a un service actif, moins bien il doit être configuré pour répondre aux différentes
+versions de NFS. On verifie et on arrange cela.
+
+```bash
+cat /proc/fs/nfsd/version
+-2 +3 +4 +4.1 +4.2
+```
+
+**Hmm sur Debian je ne trouve pas encore l'option pour
+désactiver les versions V3,V4,V4.1... chiant**
+
+Edition de /etc/exports
+```txt
+# /etc/exports
+/mnt/raid       10.0.2.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
+/mnt/lvm        10.0.2.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
+```
+
+Modification des droits sur les dossiers d'exports
+```bash
+chown -R nobody:nogroup /mnt/{raid,lvm}
+chmod -R 700 /mnt/{raid,lvm}
+ls -l /mnt
+total 0
+drwx------ 2 nobody nogroup 6 25 oct.  19:52 lvm
+drwx------ 2 nobody nogroup 6 25 oct.  19:18 raid
+```
+
+**Penser à voir les ACL avec l'export**
+
+### Installation de SAMBA
+```bash
+apt install -y samba samba-client cifs-utils
+```
+
+On conserve tous les paramètres par défaut et on crée nos deux
+partages:
+```smb.conf
+[RAID]
+        comment = NAS RAID 6
+        path = /mnt/raid
+        browseable = yes
+        read only = yes
+        guest ok = no
+        valid users = @Admin @User
+        write list = @Admin
+        create mask = 0113
+        directory mask = 0002
+
+[LVM]
+        comment = NAS LVM JBOD
+        path = /mnt/lvm
+        browseable = yes
+        read only = yes
+        guest ok = no
+        valid users = @Admin @User
+        write list = @Admin
+        create mask = 0113
+        directory mask = 0002
+```
+**Il faut vérifier les mask**
+
+Création des utilisateurs dans la base
+```
+for k in jeddie aallyant mcautputma clirrtiry; do
+    echo "abcd\nabcd" pdbedit -a $USER
+done
+
+Unix username:        jeddie
+NT username:
+Account Flags:        [U          ]
+User SID:             S-1-5-21-1275815848-2222129501-753046093-1002
+Primary Group SID:    S-1-5-21-1275815848-2222129501-753046093-513
+Full Name:            Jeanluc EDDIE
+Home Directory:       \\NAS\jeddie
+HomeDir Drive:
+Logon Script:
+Profile Path:         \\NAS\jeddie\profile
+Domain:               NAS
+Account desc:
+Workstations:
+Munged dial:
+Logon time:           0
+Logoff time:          mer., 06 févr. 2036 16:06:39 CET
+Kickoff time:         mer., 06 févr. 2036 16:06:39 CET
+Password last set:    jeu., 26 oct. 2023 01:14:24 CEST
+Password can change:  jeu., 26 oct. 2023 01:14:24 CEST
+Password must change: never
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+Unix username:        aallyant
+NT username:
+Account Flags:        [U          ]
+User SID:             S-1-5-21-1275815848-2222129501-753046093-1003
+Primary Group SID:    S-1-5-21-1275815848-2222129501-753046093-513
+Full Name:            Amin ALLYANT
+Home Directory:       \\NAS\aallyant
+HomeDir Drive:
+Logon Script:
+Profile Path:         \\NAS\aallyant\profile
+Domain:               NAS
+Account desc:
+Workstations:
+Munged dial:
+Logon time:           0
+Logoff time:          mer., 06 févr. 2036 16:06:39 CET
+Kickoff time:         mer., 06 févr. 2036 16:06:39 CET
+Password last set:    jeu., 26 oct. 2023 01:15:23 CEST
+Password can change:  jeu., 26 oct. 2023 01:15:23 CEST
+Password must change: never
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+Unix username:        mcautputma
+NT username:
+Account Flags:        [U          ]
+User SID:             S-1-5-21-1275815848-2222129501-753046093-1004
+Primary Group SID:    S-1-5-21-1275815848-2222129501-753046093-513
+Full Name:            Medhi CAUTPUTMA
+Home Directory:       \\NAS\mcautputma
+HomeDir Drive:
+Logon Script:
+Profile Path:         \\NAS\mcautputma\profile
+Domain:               NAS
+Account desc:
+Workstations:
+Munged dial:
+Logon time:           0
+Logoff time:          mer., 06 févr. 2036 16:06:39 CET
+Kickoff time:         mer., 06 févr. 2036 16:06:39 CET
+Password last set:    jeu., 26 oct. 2023 01:15:57 CEST
+Password can change:  jeu., 26 oct. 2023 01:15:57 CEST
+Password must change: never
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+Unix username:        clirrtiry
+NT username:
+Account Flags:        [U          ]
+User SID:             S-1-5-21-1275815848-2222129501-753046093-1005
+Primary Group SID:    S-1-5-21-1275815848-2222129501-753046093-513
+Full Name:            Celestin LIRRTIRY
+Home Directory:       \\NAS\clirrtiry
+HomeDir Drive:
+Logon Script:
+Profile Path:         \\NAS\clirrtiry\profile
+Domain:               NAS
+Account desc:
+Workstations:
+Munged dial:
+Logon time:           0
+Logoff time:          mer., 06 févr. 2036 16:06:39 CET
+Kickoff time:         mer., 06 févr. 2036 16:06:39 CET
+Password last set:    jeu., 26 oct. 2023 01:16:16 CEST
+Password can change:  jeu., 26 oct. 2023 01:16:16 CEST
+Password must change: never
+Last bad password   : 0
+Bad password count  : 0
+Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+```
+
