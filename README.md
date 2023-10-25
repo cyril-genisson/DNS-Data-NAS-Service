@@ -104,7 +104,7 @@ Super! Une bonne chose de faite. On installe à présent deux trois outils indis
 pour ce sentir à la maison.
 
 ```bash
-sudo apt install -y vim screen gdisk mdadm
+sudo apt install -y vim screen gdisk mdadm lvm2 xfsprogs xfsdump acl attr
 ```
 
 ## On passe à l'action: configuration du RAID 6
@@ -211,3 +211,51 @@ Consistency Policy : resync
 ```
 
 - En finir avec cette partie
+Le client n'ayant pas tranché pour le système de fichier, nous partons sur un système XFS. On pourra faire un dump
+du système de fichier par la suite pour l'envoyer directement dans le serveur NAS-BACKUP.
+```bash
+# Récupération de l'UUID du disque md0
+blkid /dev/md0
+/dev/md0: UUID="9848edc3-b8e9-44fe-bbc0-10ae8fb467e2" BLOCK_SIZE="512" TYPE="xfs"
+
+# Création des deux répertoires pour le montage des partitions
+mkdir /mnt/{raid,lvm}
+
+# Ecriture du fichier /etc/fstab pour le montage automatique
+echo 'UUID=9848edc3-b8e9-44fe-bbc0-10ae8fb467e2 /mnt/raid xfs defaults 1 2' | tee -a /etc/fstab
+UUID=9848edc3-b8e9-44fe-bbc0-10ae8fb467e2 /mnt/raid xfs defaults 1 2
+
+# On recharge le montage automatique
+systemctl daemon-reload
+mount -a
+mount | grep md0
+/dev/md0 on /mnt/raid type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=5120,noquota)
+```
+
+
+## Le JBOD à présent
+Précédement nous avions déjà préparé les disques, il ne reste plus qu'à fabriquer le tas...
+
+```bash
+pvcreate /dev/sd{i..k}1
+vgcreate vg_nas /dev/sd{i..k}1
+lvcreate -l 100%FREE -n lv_nas vg_nas
+lvdisplay
+--- Logical volume ---
+  LV Path                /dev/vg_nas/lv_nas
+  LV Name                lv_nas
+  VG Name                vg_nas
+  LV UUID                mGCoGF-i2VU-jKox-GP45-mWE6-KNk7-dlffDh
+  LV Write Access        read/write
+  LV Creation host, time nas, 2023-10-25 19:42:11 +0200
+  LV Status              available
+  # open                 0
+  LV Size                <2,99 GiB
+  Current LE             765
+  Segments               3
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           254:0
+```
+
