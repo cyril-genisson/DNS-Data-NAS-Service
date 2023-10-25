@@ -297,3 +297,20 @@ tmpfs                       392M       0  392M   0% /run/user/1000
 /dev/mapper/vg_nas-lv_nas   3,0G     54M  2,9G   2% /mnt/lvm
 ```
 
+## NFS & SAMBA/CIFS
+Alors là c'est le pompon!!! Quitte à continuer à faire des cochoneries je vais tranquillement commencer par
+me faire un café. Je reviens dans deux minutes...
+...
+...
+...
+
+J'espère que je n'ai pas étais trop long.
+Avant de faire quoi que ce soit nous allons rapidement créer nos petits utilisateurs à partir d'un fichier cvs
+préparé aux petits oignons:
+```csv
+NOM,PRENOM,GROUPE
+EDDIE,Jeanluc,User
+ALLYANT,Amin,Admin
+CAUTPUTMA,Medhi,User
+LIRRTIRY,Celestin,Admin
+```
