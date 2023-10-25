@@ -99,4 +99,115 @@ systemctl status ssh
      CGroup: /system.slice/ssh.service
              └─582 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
 ```
-Super! Une bonne chose de faite.
+
+Super! Une bonne chose de faite. On installe à présent deux trois outils indispensables
+pour ce sentir à la maison.
+
+```bash
+sudo apt install -y vim screen gdisk mdadm
+```
+
+## On passe à l'action: configuration du RAID 6
+
+- Analyse de la disposition des disques
+```bash
+lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0   10G  0 disk
+├─sda1   8:1    0    9G  0 part /
+├─sda2   8:2    0    1K  0 part
+└─sda5   8:5    0  975M  0 part [SWAP]
+sdb      8:16   0    3G  0 disk
+sdc      8:32   0    3G  0 disk
+sdd      8:48   0    3G  0 disk
+sde      8:64   0    3G  0 disk
+sdf      8:80   0    3G  0 disk
+sdg      8:96   0    3G  0 disk
+sdh      8:112  0    3G  0 disk
+sdi      8:128  0    1G  0 disk
+sdj      8:144  0    1G  0 disk
+sdk      8:160  0    1G  0 disk
+sr0     11:0    1 1024M  0 rom
+```
+
+Parfait notre disque système est sda. Nous allons configurer
+les disques sd{b..h} pour le RAID et les disques sd{i..k} pour
+LVM.
+
+```bash
+# Un petit script bash pour faire le job
+for k in {b..h}; do
+    sgdisk --new=1:0:0 --typecode=1:fd00 --change-name=1:"RAID" /dev/sd$k
+done
+
+for k in {i..k}; do
+    sgdisk --new=1:0:0 --typecode=1:8e00 --change-name=1:"LVM" /dev/sd$k
+done
+```
+
+Enfin on vérifie le travail que l'on conserve comme preuve d'un
+travail vraiment bien fait:
+```bash
+for k in {b..k}; do
+    echo '--------------------------------------' >> verif_disks.log
+    echo "-     DISK: /dev/sd$k" >> verif_disks.log
+    echo '--------------------------------------' >> verif_disks.log
+    sgdisk -i 1 /dev/sd$k >> verif_disks.log
+done
+```
+
+Je vous l'accorde, le script pour la partie vérification aurait pu être un peu plus soigné.
+Mais le JOB est fait.
+
+- Création de la grappe
+```bash
+mdadm --create /dev/md0 --level=6 --raid-device=7 /dev/sd{b..h}1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
+
+# Et on vérifie encore une fois que tout c'est bien passé
+cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4]
+md0 : active raid6 sdh1[6] sdg1[5] sdf1[4] sde1[3] sdd1[2] sdc1[1] sdb1[0]
+      15705600 blocks super 1.2 level 6, 512k chunk, algorithm 2 [7/7] [UUUUUUU]
+
+unused devices: <none>
+
+mdadm --detail /dev/md0
+/dev/md0:
+           Version : 1.2
+     Creation Time : Wed Oct 25 17:52:09 2023
+        Raid Level : raid6
+        Array Size : 15705600 (14.98 GiB 16.08 GB)
+     Used Dev Size : 3141120 (3.00 GiB 3.22 GB)
+      Raid Devices : 7
+     Total Devices : 7
+       Persistence : Superblock is persistent
+
+       Update Time : Wed Oct 25 17:53:08 2023
+             State : clean
+    Active Devices : 7
+   Working Devices : 7
+    Failed Devices : 0
+     Spare Devices : 0
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : resync
+
+              Name : nas:0  (local to host nas)
+              UUID : c02d27cf:97e82f81:5a10cc14:975c159d
+            Events : 17
+
+    Number   Major   Minor   RaidDevice State
+       0       8       17        0      active sync   /dev/sdb1
+       1       8       33        1      active sync   /dev/sdc1
+       2       8       49        2      active sync   /dev/sdd1
+       3       8       65        3      active sync   /dev/sde1
+       4       8       81        4      active sync   /dev/sdf1
+       5       8       97        5      active sync   /dev/sdg1
+       6       8      113        6      active sync   /dev/sdh1
+```
+
+- En finir avec cette partie
