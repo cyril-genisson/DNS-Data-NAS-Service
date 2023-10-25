@@ -234,7 +234,7 @@ mount | grep md0
 
 
 ## Le JBOD à présent
-Précédement nous avions déjà préparé les disques, il ne reste plus qu'à fabriquer le tas...
+Précédement nous avions déjà préparé les disques, il ne reste plus qu'à fabriquer le tas de .....
 
 ```bash
 pvcreate /dev/sd{i..k}1
@@ -257,5 +257,43 @@ lvdisplay
   Read ahead sectors     auto
   - currently set to     256
   Block device           254:0
+
+# On formate en XFS
+mkfs.xfs /dev/vg_nas/lv_nas
+meta-data=/dev/vg_nas/lv_nas     isize=512    agcount=4, agsize=195840 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=1 inobtcount=1 nrext64=0
+data     =                       bsize=4096   blocks=783360, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=16384, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+# Et on monte
+blkid /dev/vg_nas/lv_nas
+/dev/vg_nas/lv_nas: UUID="6571e3e1-dff6-4c33-96a8-c45db148c3f6" BLOCK_SIZE="512" TYPE="xfs"
+
+echo 'UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/lvm xfs defaults 1 2' | tee -a /etc/fstab
+UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/lvm xfs defaults 1 2
+
+systemctl daemon-reload
+mount -a
+mount | grep lvm
+/dev/mapper/vg_nas-lv_nas on /mnt/lvm type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+```
+
+Voilà enfin un système de fichiers parfaitement opérationnel
+```bash
+Sys. de fichiers          Taille Utilisé Dispo Uti% Monté sur
+udev                        1,9G       0  1,9G   0% /dev
+tmpfs                       392M    688K  391M   1% /run
+/dev/sda1                   8,9G    1,4G  7,0G  17% /
+tmpfs                       2,0G       0  2,0G   0% /dev/shm
+tmpfs                       5,0M       0  5,0M   0% /run/lock
+/dev/md0                     15G    140M   15G   1% /mnt/raid
+tmpfs                       392M       0  392M   0% /run/user/1000
+/dev/mapper/vg_nas-lv_nas   3,0G     54M  2,9G   2% /mnt/lvm
 ```
 
