@@ -1,0 +1,4 @@
+#!/bin/bash
+for k in jeddie aallyant mcautputma clirrtiry; do
+    echo -e "abcd\nabcd" | pdbedit -a $k
+done
