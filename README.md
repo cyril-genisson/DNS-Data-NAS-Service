@@ -483,7 +483,7 @@ partages:
 Création des utilisateurs dans la base
 ```
 for k in jeddie aallyant mcautputma clirrtiry; do
-    echo -e "abcd\nabcd" pdbedit -a $k
+    echo -e "abcd\nabcd" | pdbedit -a $k
 done
 
 Unix username:        jeddie
