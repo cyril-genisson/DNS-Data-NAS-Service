@@ -1,0 +1,44 @@
+#!/bin/bash
+
+NEWUSERFILE=$1
+
+# Le fichier csv est composé de 3 champs                                                                                             # Nom,Prénom,Role
+#
+
+for ENTRY in $(cat $NEWUSERFILE | grep -v ^NOM)
+do
+    FIRSTNAME=$(echo $ENTRY | cut -d, -f2)
+    LASTNAME=$(echo $ENTRY | cut -d, -f1)
+    ROLE=$(echo $ENTRY | cut -d, -f3)
+
+    echo $FIRSTNAME $LASTNAME $PASSWORD $ROLE
+
+    # Nettoyage des caractères accentués pour la génération du nom d'utilisateur
+    NORMFIRST=$(echo $FIRSTNAME | sed 'y/àâçéèëêïîöôùüûÀÇÉÈËÊÏÎÖÔÙÜÛ/aaceeeeiioouuuACEEEEIIOOUUU/')
+    NORMLAST=$(echo $LASTNAME | sed 'y/àâçéèëêïîöôùüûÀÇÉÈËÊÏÎÖÔÙÜÛ/aaceeeeiioouuuACEEEEIIOOUUU/')
+
+    # Normalisation du nom d'utilisateur
+    FIRSTINITIAL=$(echo $NORMFIRST | cut -c 1 | tr 'A-Z' 'a-z')
+    LOWERLASTNAME=$(echo $NORMLAST | tr -d \' | tr 'A-Z' 'a-z')
+    ACCTNAME=$FIRSTINITIAL$LOWERLASTNAME
+
+    # Tests pour les doublons
+    id $ACCTNAME
+    if [ $? -eq 0 ]; then
+        continue
+    else
+        # Création du compte et affectation au groupe
+        echo "Création de l'utilisateur $ACCTNAME $ROLE"
+        useradd -c "$FIRSTNAME $LASTNAME" -s /dev/null $ACCTNAME
+        if [ "$ROLE" = "Admin" ] ; then
+            echo "L'utilisateur $ACCTNAME est un Administrateur: ajout au groupe Admin"
+            usermod -aG Admin $ACCTNAME
+        else
+            echo "L'utilistateur $ACCTNAME est un User standard: ajout au groupe User"
+            usermod -aG User $ACCTNAME
+        fi
+        echo "$ACCTNAME:abcd" | chpasswd
+        echo "$ACCTNAME $PASSWD $ROLE" >> create.txt
+    fi
+done
+exit 0
