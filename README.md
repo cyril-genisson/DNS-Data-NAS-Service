@@ -101,10 +101,10 @@ systemctl status ssh
 ```
 
 Super! Une bonne chose de faite. On installe à présent deux trois outils indispensables
-pour ce sentir à la maison.
+pour se sentir à la maison.
 
 ```bash
-sudo apt install -y vim screen gdisk mdadm lvm2 xfsprogs xfsdump acl attr
+sudo apt install -y vim screen bash-completion gdisk mdadm lvm2 xfsprogs xfsdump acl attr rsync
 ```
 
 ## On passe à l'action: configuration du RAID 6
@@ -214,6 +214,21 @@ Consistency Policy : resync
 Le client n'ayant pas tranché pour le système de fichier, nous partons sur un système XFS. On pourra faire un dump
 du système de fichier par la suite pour l'envoyer directement dans le serveur NAS-BACKUP.
 ```bash
+# Formatage XFS
+mkfs.xfs /dev/md0
+log stripe unit (524288 bytes) is too large (maximum is 256KiB)
+log stripe unit adjusted to 32KiB
+meta-data=/dev/md0               isize=512    agcount=16, agsize=245504 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=1 inobtcount=1 nrext64=0
+data     =                       bsize=4096   blocks=3926400, imaxpct=25
+         =                       sunit=128    swidth=640 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=16384, version=2
+         =                       sectsz=512   sunit=8 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
 # Récupération de l'UUID du disque md0
 blkid /dev/md0
 /dev/md0: UUID="9848edc3-b8e9-44fe-bbc0-10ae8fb467e2" BLOCK_SIZE="512" TYPE="xfs"
