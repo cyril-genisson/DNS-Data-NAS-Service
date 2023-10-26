@@ -29,7 +29,7 @@ do
     else
         # Création du compte et affectation au groupe
         echo "Création de l'utilisateur $ACCTNAME $ROLE"
-        useradd -c "$FIRSTNAME $LASTNAME" -s /dev/null $ACCTNAME
+        useradd -c "$FIRSTNAME $LASTNAME" -s /usr/sbin/nologin $ACCTNAME
         if [ "$ROLE" = "Admin" ] ; then
             echo "L'utilisateur $ACCTNAME est un Administrateur: ajout au groupe Admin"
             usermod -aG Admin $ACCTNAME

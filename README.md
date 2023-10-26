@@ -234,17 +234,17 @@ blkid /dev/md0
 /dev/md0: UUID="9848edc3-b8e9-44fe-bbc0-10ae8fb467e2" BLOCK_SIZE="512" TYPE="xfs"
 
 # Création des deux répertoires pour le montage des partitions
-mkdir /mnt/{raid,lvm}
+mkdir -p /mnt/exports/{raid,lvm}
 
 # Ecriture du fichier /etc/fstab pour le montage automatique
 echo 'UUID=9848edc3-b8e9-44fe-bbc0-10ae8fb467e2 /mnt/raid xfs defaults 1 2' | tee -a /etc/fstab
-UUID=9848edc3-b8e9-44fe-bbc0-10ae8fb467e2 /mnt/raid xfs defaults 1 2
+UUID=9848edc3-b8e9-44fe-bbc0-10ae8fb467e2 /mnt/exports/raid xfs defaults 1 2
 
 # On recharge le montage automatique
 systemctl daemon-reload
 mount -a
 mount | grep md0
-/dev/md0 on /mnt/raid type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=5120,noquota)
+/dev/md0 on /mnt/exports/raid type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,sunit=1024,swidth=5120,noquota)
 ```
 
 
@@ -290,13 +290,13 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 blkid /dev/vg_nas/lv_nas
 /dev/vg_nas/lv_nas: UUID="6571e3e1-dff6-4c33-96a8-c45db148c3f6" BLOCK_SIZE="512" TYPE="xfs"
 
-echo 'UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/lvm xfs defaults 1 2' | tee -a /etc/fstab
-UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/lvm xfs defaults 1 2
+echo 'UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/exports/lvm xfs defaults 1 2' | tee -a /etc/fstab
+UUID=6571e3e1-dff6-4c33-96a8-c45db148c3f6 /mnt/exports/lvm xfs defaults 1 2
 
 systemctl daemon-reload
 mount -a
 mount | grep lvm
-/dev/mapper/vg_nas-lv_nas on /mnt/lvm type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
+/dev/mapper/vg_nas-lv_nas on /mnt/exports/lvm type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
 ```
 
 Voilà enfin un système de fichiers parfaitement opérationnel
@@ -307,16 +307,19 @@ tmpfs                       392M    688K  391M   1% /run
 /dev/sda1                   8,9G    1,4G  7,0G  17% /
 tmpfs                       2,0G       0  2,0G   0% /dev/shm
 tmpfs                       5,0M       0  5,0M   0% /run/lock
-/dev/md0                     15G    140M   15G   1% /mnt/raid
+/dev/md0                     15G    140M   15G   1% /mnt/exports/raid
 tmpfs                       392M       0  392M   0% /run/user/1000
-/dev/mapper/vg_nas-lv_nas   3,0G     54M  2,9G   2% /mnt/lvm
+/dev/mapper/vg_nas-lv_nas   3,0G     54M  2,9G   2% /mnt/exports/lvm
 ```
 
 ## NFS & SAMBA/CIFS
 Alors là c'est le pompon!!! Quitte à continuer à faire des cochoneries je vais tranquillement commencer par
 me faire un café. Je reviens dans deux minutes...
+
 ...
+
 ...
+
 ...
 
 J'espère que je n'ai pas étais trop long.
@@ -330,11 +333,11 @@ CAUTPUTMA,Medhi,User
 LIRRTIRY,Celestin,Admin
 ```
 ```bash
-groupadd Admin
-groupadd User
+groupadd -g 10001 Admin
+groupadd -g 10002 User
 ```
 
-Puis passage à la moulinette par notre script CreateUser. Pour le test le mot de passe de tous les utilisateurs
+Puis passage à la moulinette par notre script CreateUser. Pour le test, le mot de passe de tous les utilisateurs
 est générique: **abcd**.
 
 D'autre part, les utilisateurs Admin/User n'ont pas à se connecter à un shell sur le NAS, donc je prends
@@ -373,7 +376,7 @@ do
 	else
 		# Création du compte et affectation au groupe
 		echo "Création de l'utilisateur $ACCTNAME $ROLE"
-        useradd -c "$FIRSTNAME $LASTNAME" -s /bin/null $ACCTNAME
+        useradd -c "$FIRSTNAME $LASTNAME" -s /usr/sbin/nologin $ACCTNAME
         if [ "$ROLE" = "Admin" ] ; then
             echo "L'utilisateur $ACCTNAME est un Administrateur: ajout au groupe Admin"
             usermod -aG Admin $ACCTNAME
@@ -393,31 +396,27 @@ exit 0
 Jeanluc EDDIE User
 id: « jeddie » : utilisateur inexistant
 Création de l'utilisateur jeddie User
-useradd : Attention : shell '/dev/null' manquant ou non-exécutable
 L'utilistateur jeddie est un User standard: ajout au groupe User
 Amin ALLYANT Admin
 id: « aallyant » : utilisateur inexistant
 Création de l'utilisateur aallyant Admin
-useradd : Attention : shell '/dev/null' manquant ou non-exécutable
 L'utilisateur aallyant est un Administrateur: ajout au groupe Admin
 Medhi CAUTPUTMA User
 id: « mcautputma » : utilisateur inexistant
 Création de l'utilisateur mcautputma User
-useradd : Attention : shell '/dev/null' manquant ou non-exécutable
 L'utilistateur mcautputma est un User standard: ajout au groupe User
 Celestin LIRRTIRY Admin
 id: « clirrtiry » : utilisateur inexistant
 Création de l'utilisateur clirrtiry Admin
-useradd : Attention : shell '/dev/null' manquant ou non-exécutable
 L'utilisateur clirrtiry est un Administrateur: ajout au groupe Admin
 ```
 On vérifie si tout c'est bien passé mais il n'y a pas de raison non?
 ```bash
 cat /etc/group | grep Admin
-Admin:x:1001:aallyant,clirrtiry
+Admin:x:10001:aallyant,clirrtiry
 
 cat /etc/group | grep User
-User:x:1002:jeddie,mcautputma
+User:x:10002:jeddie,mcautputma
 ```
 
 ### Installation du service NFS
