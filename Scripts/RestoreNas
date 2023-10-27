@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# filename: RestoreNas
+#
+# Description: restauration NAS-BACKUP ---> NAS à exécuter depuis nas
+#
+
+PORT=22
+USERNAME=backuprsync
+KEY=/home/$USERNAME/.ssh/saversync
+rep1=/mnt/exports/raid/
+rep2=/mnt/exports/lvm/
+
+DATE=$(date +"%Y%m%d-%H%M")
+REPORT=/home/backuprsync/report-restore-$DATE
+
+for k in $rep{1..2}; do
+    echo "\/*********************************************\\" >> $REPORT
+    echo -e "\t\t$k" >> $REPORT
+    echo "\*********************************************/" >> $REPORT
+    sudo rsync -av --delete --force --stats \
+        --rsync-path="sudo rsync" \
+        -e "ssh -i $KEY -p $PORT" \
+        $USERNAME@nas-backup:$k $k >> $REPORT
+    echo -e "\n\n\n" >> $REPORT
+done
+exit 0

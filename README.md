@@ -155,6 +155,7 @@ for k in {b..k}; do
     sgdisk -i 1 /dev/sd$k >> verif_disks.log
 done
 ```
+[verif_disks.log](./reports/verif_disks.log)
 
 Je vous l'accorde, le script pour la partie vérification aurait pu être un peu plus soigné.
 Mais le JOB est fait.
@@ -593,4 +594,153 @@ Last bad password   : 0
 Bad password count  : 0
 Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 ```
+
+**A finir**
+
+## Configuration du système de réplication
+Apparement, rsync est le choix du chef! Donc on part là-dessus.
+Deux options s'offrent à nous. Faisons nous le mirroir en mode
+PUSH ou PULL? D'autre part à quelle fréquence? Est-ce le client 
+qui désidera  de ce point ou bien est-ce que je dois prendre 
+une initiative?
+
+Bon, puisque l'on est obligé de trancher rapidement, je fais partir
+sur un mode PULL avec une fréquence de 1 minutes pour les essais.
+
+Néanmoins, le client va être déçu car si pour une raison quelconque
+il souhaite récupérer un fichier perdu accidentellement et bien
+ce n'est pas en allant voir son NAS-(BACKUP) qu'il va pouvoir le
+retrouver. Cela lui permet juste d'être redondant en cas de défaillance
+majeur du NAS principal.
+
+- Création d'un utilisateur de sauvegarde *backuprsync* appartenant au groupe *sudo*
+avec accès à la commande **sudo** sans mot de passe. Cet utilisateur n'aura pas besoin
+de mot de passe pour se connecter, donc on ne le définit pas.
+
+```bash
+useradd -m -u 20000 -G sudo -c "Backup Admin" -s /bin/bash backuprsync
+ssh-keygen -t ed25519 -C "BackupRsync" -N "" -f saversync
+mkdir ~backuprsync/.ssh
+cp  saversync* ~backuprsync/.ssh/.
+chown -R backuprsync:backuprsync ~backuprsync/.ssh
+```
+
+On a généré une paire de clefs SSH que l'on a mis sur les deux
+machines pour l'utilisateur *backuprsync* pour que rsync puisse se connecter sans mot
+passe. Evidement, on a copié la clef public dans le fichier authorized_keys.
+Enfin on a mis la commande sudo sans mot de passe pour tous les membres du groupe
+**sudo**. En fonction de la politique de sécurité il sera toujours temps d'effectuer
+un petit réglage sur ce point.
+
+```sudo
+%sudo   ALL=(ALL:ALL) NOPASSWD:ALL
+```
+
+- Passons aux scripts de sauvegarde et de restauration:
+```bash
+#!/bin/bash
+#
+# filename: BackupNas
+#
+# Description: sauvegarde NAS ---> NAS-BACKUP à exécuter depuis nas-backup
+#
+
+PORT=22
+USERNAME=backuprsync
+KEY=/home/$USERNAME/.ssh/saversync
+rep1=/mnt/exports/raid/
+rep2=/mnt/exports/lvm/
+
+DATE=$(date +"%Y%m%d-%H%M")
+REPORT=/home/backuprsync/report-save-$DATE
+
+for k in $rep{1..2}; do
+    echo "/*********************************************\ >> $REPORT
+    echo "\t\t$k >> $REPORT
+    echo "\*********************************************/ >> $REPORT
+    rsync -arlEv --delete --force --stats \
+        --rsync-path="sudo rsync" \
+        -e "ssh -i $KEY -p $PORT" \
+        $USERNAME@nas:$k $k >> $REPORT
+    echo -e"\n\n\n" >> $REPORT
+done
+exit 0
+```
+
+```bash
+#!/bin/bash
+#
+# filename: RestoreNas
+#
+# Description: restauration NAS-BACKUP ---> NAS à exécuter depuis nas
+#
+
+PORT=22
+USERNAME=backuprsync
+KEY=/home/$USERNAME/.ssh/saversync
+rep1=/mnt/exports/raid/
+rep2=/mnt/exports/lvm/
+
+DATE=$(date +"%Y%m%d-%H%M")
+REPORT=/home/backuprsync/report-restore-$DATE
+
+for k in $rep{1..2}; do
+    echo "/*********************************************\ >> $REPORT
+    echo "\t\t$k >> $REPORT
+    echo "\*********************************************/ >> $REPORT
+    rsync -av --delete --force --stats \
+        --rsync-path="sudo rsync" \
+        -e "ssh -i $KEY -p $PORT" \
+        $USERNAME@nas-backup:$k $k >> $REPORT
+    echo -e"\n\n\n" >> $REPORT
+done
+exit 0
+```
+
+## TEST RSYNC (à remettre au client)
+Paramètre pour les tests:
+- nas: 192.168.56.101/24
+- nas-backup: 192.168.56.103/24
+
+Modification des fichiers hosts en conséquence:
+```bash
+# /etc/hosts
+192.168.56.101 nas.laplateforme.lan nas
+192.168.56.103 nas-backup.laplateforme.lan nas-backup
+```
+
+On génère à l'aide d'un script des fichiers et répertoires sur les volumes RAID et LVM
+```bash
+#!/bin/bash
+#
+# Description: génère des dossiers et des fichiers quelconques
+#
+rep1=/mnt/exports/raid/
+rep2=/mnt/exports/lvm/
+
+for k in range $rep{1..2}; do
+    mkdir -p $k/dir{1..10}/dir{1..10}
+    touch $k/dir{1..10}/dir{1..10}/file{1..10}
+    touch $k/dir{1..10}/file{1..10}
+    touch $k/file{1..10}
+done
+exit 0
+```
+
+Enfin on effectue 5 tests:
+1) synchronisation complète des deux volumes.
+[Report 20231027-2012](./reports/report-save-20231027-2012)
+2) on efface tous les répertoires du volume RAID
+et l'on crée 10 nouveaux fichiers.
+[Report 20231027-2015](./reports/report-save-20231027-2015)
+3) on supprime l'intégralité du contenu des deux volumes.
+[Report 20231027-2016](./reports/report-save-20231027-2016)
+4) on programme le crontab de *backuprsync* et on joue avec les fichiers
+des deux volumes (programmation du contrab toutes les minutes)
+```txt
+*/1 * * * * /home/backuprsync/bin/BackupNas
+```
+L'ensemble des éléments de ce dernier test sont dans le dossier [cron-save](./reports/cron-save.tar.bz2).
+5) restauration complète du NAS après désastre
+[Report 10231027-2129](./reports/report-restore-20231027-2129)
 

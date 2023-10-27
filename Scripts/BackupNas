@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# filename: BackupNas
+#
+# Description: sauvegarde NAS ---> NAS-BACKUP
+
+PORT=22
+USERNAME=backuprsync
+KEY=/home/$USERNAME/.ssh/saversync
+
+REP1="/mnt/exports/raid/"
+REP2="/mnt/exports/lvm/"
+
+DATE=$(date +"%Y%m%d-%H%M")
+REPORT=/home/backuprsync/report-save-$DATE
+
+for k in $REP{1..2}; do
+	echo "/*********************************************\\" >> $REPORT
+	echo -e "\t\t$k\n ">> $REPORT
+	echo "\\*********************************************/" >> $REPORT
+	sudo rsync -av --delete --force --stats \
+		--rsync-path="sudo rsync" \
+        	-e "ssh -i $KEY -p $PORT" \
+		$USERNAME@nas:$k $k >> $REPORT
+	echo -e "\n\n\n" >> $REPORT
+done
+exit 0
