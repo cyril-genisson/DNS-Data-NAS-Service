@@ -655,14 +655,14 @@ DATE=$(date +"%Y%m%d-%H%M")
 REPORT=/home/backuprsync/report-save-$DATE
 
 for k in $rep{1..2}; do
-    echo "/*********************************************\ >> $REPORT
-    echo "\t\t$k >> $REPORT
-    echo "\*********************************************/ >> $REPORT
+    echo "/*********************************************\" >> $REPORT
+    echo -e "\t\t$k" >> $REPORT
+    echo "\*********************************************/" >> $REPORT
     rsync -arlEv --delete --force --stats \
         --rsync-path="sudo rsync" \
         -e "ssh -i $KEY -p $PORT" \
         $USERNAME@nas:$k $k >> $REPORT
-    echo -e"\n\n\n" >> $REPORT
+    echo -e "\n\n\n" >> $REPORT
 done
 exit 0
 ```
@@ -686,13 +686,13 @@ REPORT=/home/backuprsync/report-restore-$DATE
 
 for k in $rep{1..2}; do
     echo "/*********************************************\ >> $REPORT
-    echo "\t\t$k >> $REPORT
-    echo "\*********************************************/ >> $REPORT
+    echo -e "\t\t$k >> $REPORT"
+    echo "\*********************************************/" >> $REPORT
     rsync -av --delete --force --stats \
         --rsync-path="sudo rsync" \
         -e "ssh -i $KEY -p $PORT" \
         $USERNAME@nas-backup:$k $k >> $REPORT
-    echo -e"\n\n\n" >> $REPORT
+    echo -e "\n\n\n" >> $REPORT
 done
 exit 0
 ```
@@ -728,19 +728,229 @@ exit 0
 ```
 
 Enfin on effectue 5 tests:
-1) synchronisation complète des deux volumes.
+1. synchronisation complète des deux volumes.
 [Report 20231027-2012](./reports/report-save-20231027-2012)
-2) on efface tous les répertoires du volume RAID
+2. on efface tous les répertoires du volume RAID
 et l'on crée 10 nouveaux fichiers.
 [Report 20231027-2015](./reports/report-save-20231027-2015)
-3) on supprime l'intégralité du contenu des deux volumes.
+3. on supprime l'intégralité du contenu des deux volumes.
 [Report 20231027-2016](./reports/report-save-20231027-2016)
-4) on programme le crontab de *backuprsync* et on joue avec les fichiers
+4. on programme le crontab de *backuprsync* et on joue avec les fichiers
 des deux volumes (programmation du contrab toutes les minutes)
 ```txt
 */1 * * * * /home/backuprsync/bin/BackupNas
 ```
-L'ensemble des éléments de ce dernier test sont dans le dossier [cron-save](./reports/cron-save.tar.bz2).
-5) restauration complète du NAS après désastre
+L'ensemble des éléments de ce test sont dans l'archive [cron-save](./reports/cron-save.tar.bz2).
+
+5. restauration complète du NAS après désastre
 [Report 10231027-2129](./reports/report-restore-20231027-2129)
+
+## TEST RAID
+Pour ce test on ne va pas passer par 4 chemins. On rends directement deux disques
+défaillants et on regarde si le RAID fait encore son travail.
+
+```bash
+# Retrait /dev/sdb1
+mdadm --manage /dev/md0 --fail /dev/sdb1 --remove /dev/sdb1
+mdadm: set /dev/sdb1 faulty in /dev/md0
+mdadm: hot removed /dev/sdb1 from /dev/md0
+
+# Retrait /dev/sdc1
+mdadm --manage /dev/md0 --fail /dev/sdc1 --remove /dev/sdc1
+mdadm: set /dev/sdc1 faulty in /dev/md0
+mdadm: hot removed /dev/sdc1 from /dev/md0
+
+# Vérification
+cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid1] [raid10]
+md0 : active raid6 sdf1[4] sdg1[5] sde1[3] sdd1[2] sdh1[6]
+      15705600 blocks super 1.2 level 6, 512k chunk, algorithm 2 [7/5] [__UUUUU]
+
+unused devices: <none>
+
+lsblk
+NAME              MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+sda                 8:0    0   10G  0 disk
+├─sda1              8:1    0    9G  0 part  /
+├─sda2              8:2    0    1K  0 part
+└─sda5              8:5    0  975M  0 part  [SWAP]
+sdb                 8:16   0    3G  0 disk
+└─sdb1              8:17   0    3G  0 part
+sdc                 8:32   0    3G  0 disk
+└─sdc1              8:33   0    3G  0 part
+sdd                 8:48   0    3G  0 disk
+└─sdd1              8:49   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sde                 8:64   0    3G  0 disk
+└─sde1              8:65   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdf                 8:80   0    3G  0 disk
+└─sdf1              8:81   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdg                 8:96   0    3G  0 disk
+└─sdg1              8:97   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdh                 8:112  0    3G  0 disk
+└─sdh1              8:113  0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdi                 8:128  0    1G  0 disk
+└─sdi1              8:129  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdj                 8:144  0    1G  0 disk
+└─sdj1              8:145  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdk                 8:160  0    1G  0 disk
+└─sdk1              8:161  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sr0                11:0    1 1024M  0 rom
+
+
+
+# Remettre les deux disques
+mdadm /dev/md0 --add /dev/sdb1
+mdadm: added /dev/sdb1
+
+mdadm /dev/md0 --add /dev/sdc1
+mdadm: added /dev/sdc1
+
+cat /proc/mdstat
+Personalities : [raid6] [raid5] [raid4] [linear] [multipath] [raid0] [raid1] [raid10]
+md0 : active raid6 sdc1[8] sdb1[7] sdf1[4] sdg1[5] sde1[3] sdd1[2] sdh1[6]
+      15705600 blocks super 1.2 level 6, 512k chunk, algorithm 2 [7/7] [UUUUUUU]
+
+unused devices: <none>
+
+
+lsblk
+NAME              MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+sda                 8:0    0   10G  0 disk
+├─sda1              8:1    0    9G  0 part  /
+├─sda2              8:2    0    1K  0 part
+└─sda5              8:5    0  975M  0 part  [SWAP]
+sdb                 8:16   0    3G  0 disk
+└─sdb1              8:17   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdc                 8:32   0    3G  0 disk
+└─sdc1              8:33   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdd                 8:48   0    3G  0 disk
+└─sdd1              8:49   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sde                 8:64   0    3G  0 disk
+└─sde1              8:65   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdf                 8:80   0    3G  0 disk
+└─sdf1              8:81   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdg                 8:96   0    3G  0 disk
+└─sdg1              8:97   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdh                 8:112  0    3G  0 disk
+└─sdh1              8:113  0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdi                 8:128  0    1G  0 disk
+└─sdi1              8:129  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdj                 8:144  0    1G  0 disk
+└─sdj1              8:145  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdk                 8:160  0    1G  0 disk
+└─sdk1              8:161  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sr0                11:0    1 1024M  0 rom
+```
+
+Encore un super JOB
+
+## TEST LVM: ajout d'un disque
+
+On ajoute un disque de 1Go que l'on va intégrer à notre tas de ... LVM
+
+```bash
+lsblk
+NAME              MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+sda                 8:0    0   10G  0 disk
+├─sda1              8:1    0    9G  0 part  /
+├─sda2              8:2    0    1K  0 part
+└─sda5              8:5    0  975M  0 part  [SWAP]
+sdb                 8:16   0    3G  0 disk
+└─sdb1              8:17   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdc                 8:32   0    3G  0 disk
+└─sdc1              8:33   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdd                 8:48   0    3G  0 disk
+└─sdd1              8:49   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sde                 8:64   0    3G  0 disk
+└─sde1              8:65   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdf                 8:80   0    3G  0 disk
+└─sdf1              8:81   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdg                 8:96   0    3G  0 disk
+└─sdg1              8:97   0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdh                 8:112  0    3G  0 disk
+└─sdh1              8:113  0    3G  0 part
+  └─md0             9:0    0   15G  0 raid6 /mnt/exports/raid
+sdi                 8:128  0    1G  0 disk
+└─sdi1              8:129  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdj                 8:144  0    1G  0 disk
+└─sdj1              8:145  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdk                 8:160  0    1G  0 disk
+└─sdk1              8:161  0 1023M  0 part
+  └─vg_nas-lv_nas 253:0    0    3G  0 lvm   /mnt/exports/lvm
+sdl                 8:176  0    1G  0 disk
+sr0                11:0    1 1024M  0 rom
+
+
+# On prépare le disque
+sgdisk --new=1:0:0 --typecode=1:8e00 --change-name=1:"LVM" /dev/sdl
+Creating new GPT entries in memory.
+The operation has completed successfully.
+
+partprobe
+pvcreate /dev/sdl1
+ Physical volume "/dev/sdl1" successfully created.
+
+vgextend vg_nas /dev/sdl1
+  Volume group "vg_nas" successfully extended
+
+lvextend -l +100%FREE /dev/vg_nas/lv_nas
+  Size of logical volume vg_nas/lv_nas changed from <2,99 GiB (765 extents) to 3,98 GiB (1020 extents).
+  Logical volume vg_nas/lv_nas successfully resized.
+
+xfs_growfs -m 100%/dev/vg_nas/lv_nas
+meta-data=/dev/mapper/vg_nas-lv_nas isize=512    agcount=4, agsize=195840 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=1 inobtcount=1 nrext64=0
+data     =                       bsize=4096   blocks=783360, imaxpct=100
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=16384, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+data blocks changed from 783360 to 1044480
+
+df -h
+Sys. de fichiers          Taille Utilisé Dispo Uti% Monté sur
+udev                        1,9G       0  1,9G   0% /dev
+tmpfs                       392M    2,2M  390M   1% /run
+/dev/sda1                   8,9G    1,6G  6,8G  19% /
+tmpfs                       2,0G       0  2,0G   0% /dev/shm
+tmpfs                       5,0M       0  5,0M   0% /run/lock
+/dev/mapper/vg_nas-lv_nas   4,0G     62M  3,9G   2% /mnt/exports/lvm
+/dev/md0                     15G    141M   15G   1% /mnt/exports/raid
+tmpfs                       392M       0  392M   0% /run/user/1000
+```
+
+Good JOB!!! 1Go de plus pour notre JBOD. Le client va vraiment être très content
+de notre petite entreprise.
+
+
+
 
