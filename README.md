@@ -54,7 +54,7 @@ initialement prévu,
 - les 3 disques de 1To en bonus ne servent à rien car non intégrable au raid par la suite. Si le client vient
 à s'en servir (et il le fera) il n'aura aucune solution de secours hormis ce deuxième NAS-Backup qui ne sert à rien
 puisque lui aussi aura vieillit en même temps que le premier (hmm, obsolescence programmée quand tu nous tiens).
-
+- pas de redondance de la carte réseau avec failover en cas de défaut d'une des deux interfaces.
 La conclusion de ce merveilleux travail, avant même de l'avoir commencé, c'est que le client finira par se retourner
 contre notre prometteuse petite PME, et tout cela parce que Paul nous demande de faire de la m....
 
@@ -74,11 +74,11 @@ Bon, c'est le chef! Et puisque l'on obéit au chef, alors au travail!!!
 L'installation de la première machine étant terminée on ajoute l'ensembles
 des disques:
 - 7 * 3Go pour le RAID 6
-- 3 * 1Go pour le LVM (en standbye)
+- 3 * 1Go pour le LVM
 
 ![ConfigNasVB](./pictures/ConfigNasVB.jpg "Configuration de la machine virtuelle NAS")
 
-Une fois terminer l'installation de cette première machine, on la clone intégralement
+Une fois terminé l'installation de cette première machine, on la clone intégralement
 en veillant à changer les adresses MAC et en conserver le nom et les UUIDs des disques.
 
 On finit enfin par installer un serveur ssh sur chaque machine pour gérer l'installation
@@ -109,7 +109,7 @@ sudo apt install -y vim screen bash-completion gdisk mdadm lvm2 xfsprogs xfsdump
 
 ## On passe à l'action: configuration du RAID 6
 
-- Analyse de la disposition des disques
+- Analyse de la disposition des disques:
 ```bash
 lsblk
 NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
@@ -160,7 +160,7 @@ done
 Je vous l'accorde, le script pour la partie vérification aurait pu être un peu plus soigné.
 Mais le JOB est fait.
 
-- Création de la grappe
+- Création de la grappe:
 ```bash
 mdadm --create /dev/md0 --level=6 --raid-device=7 /dev/sd{b..h}1
 mdadm: Defaulting to version 1.2 metadata
@@ -211,9 +211,11 @@ Consistency Policy : resync
        6       8      113        6      active sync   /dev/sdh1
 ```
 
-- En finir avec cette partie
-Le client n'ayant pas tranché pour le système de fichier, nous partons sur un système XFS. On pourra faire un dump
-du système de fichier par la suite pour l'envoyer directement dans le serveur NAS-BACKUP.
+- En finir avec cette partie:
+
+Le client n'ayant pas tranché pour le système de fichier, nous partons sur un XFS. On pourra faire un dump
+du système de fichier par la suite pour l'envoyer directement sur un serveur de bandes au cas où notre
+client et Paul deviendraient plus raisonables.
 ```bash
 # Formatage XFS
 mkfs.xfs /dev/md0
@@ -300,7 +302,7 @@ mount | grep lvm
 /dev/mapper/vg_nas-lv_nas on /mnt/exports/lvm type xfs (rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota)
 ```
 
-Voilà enfin un système de fichiers parfaitement opérationnel
+Voilà enfin un système de fichiers parfaitement opérationnel:
 ```bash
 Sys. de fichiers          Taille Utilisé Dispo Uti% Monté sur
 udev                        1,9G       0  1,9G   0% /dev
@@ -324,7 +326,7 @@ me faire un café. Je reviens dans deux minutes...
 ...
 
 J'espère que je n'ai pas étais trop long.
-Avant de faire quoi que ce soit nous allons rapidement créer nos petits utilisateurs à partir d'un fichier cvs
+Avant de faire quoi que ce soit nous allons rapidement créer nos petits utilisateurs à partir d'un fichier csv
 préparé aux petits oignons:
 ```csv
 NOM,PRENOM,GROUPE
@@ -333,6 +335,8 @@ ALLYANT,Amin,Admin
 CAUTPUTMA,Medhi,User
 LIRRTIRY,Celestin,Admin
 ```
+
+On ajoute les deux groupes sur le système:
 ```bash
 groupadd -g 10001 Admin
 groupadd -g 10002 User
@@ -341,9 +345,10 @@ groupadd -g 10002 User
 Puis passage à la moulinette par notre script CreateUser. Pour le test, le mot de passe de tous les utilisateurs
 est générique: **abcd**.
 
-D'autre part, les utilisateurs Admin/User n'ont pas à se connecter à un shell sur le NAS, donc je prends
-l'initiative de ne pas leur affecter d'interpréteur et ils n'auront pas de répertoire personnel sur le NAS.
-
+D'autre part, les utilisateurs Admin/User sont configurés de la manière suivante:
+- pas de shell de connexion,
+- pas de groupe personnel,
+- pas de répertoire personnel.
 ```bash
 #!/bin/bash
 
@@ -377,13 +382,10 @@ do
 	else
 		# Création du compte et affectation au groupe
 		echo "Création de l'utilisateur $ACCTNAME $ROLE"
-        useradd -c "$FIRSTNAME $LASTNAME" -s /usr/sbin/nologin $ACCTNAME
         if [ "$ROLE" = "Admin" ] ; then
-            echo "L'utilisateur $ACCTNAME est un Administrateur: ajout au groupe Admin"
-            usermod -aG Admin $ACCTNAME
+            useradd -c "$FIRSTNAME $LASTNAME" -g Admin -s /usr/sbin/nologin $ACCTNAME
         else
-            echo "L'utilistateur $ACCTNAME est un User standard: ajout au groupe User"
-            usermod -aG User $ACCTNAME
+            useradd -c "$FIRSTNAME $LASTNAME" -g User -s /usr/sbin/nologin $ACCTNAME
         fi
 		echo "$ACCTNAME:abcd" | chpasswd
         echo "$ACCTNAME $PASSWD $ROLE" >> create.txt # pour pouvoir nettoyer le système durant les tests et après par la même occasion.
@@ -397,32 +399,20 @@ exit 0
 Jeanluc EDDIE User
 id: « jeddie » : utilisateur inexistant
 Création de l'utilisateur jeddie User
-L'utilistateur jeddie est un User standard: ajout au groupe User
 Amin ALLYANT Admin
 id: « aallyant » : utilisateur inexistant
 Création de l'utilisateur aallyant Admin
-L'utilisateur aallyant est un Administrateur: ajout au groupe Admin
 Medhi CAUTPUTMA User
 id: « mcautputma » : utilisateur inexistant
 Création de l'utilisateur mcautputma User
-L'utilistateur mcautputma est un User standard: ajout au groupe User
 Celestin LIRRTIRY Admin
 id: « clirrtiry » : utilisateur inexistant
 Création de l'utilisateur clirrtiry Admin
-L'utilisateur clirrtiry est un Administrateur: ajout au groupe Admin
-```
-On vérifie si tout c'est bien passé mais il n'y a pas de raison non?
-```bash
-cat /etc/group | grep Admin
-Admin:x:10001:aallyant,clirrtiry
-
-cat /etc/group | grep User
-User:x:10002:jeddie,mcautputma
 ```
 
 ### Installation du service NFS
 
-Comme à notre habitude un petit apt install s'impose:
+Comme à notre habitude un petit **apt install** s'impose:
 
 ```bash
 apt install -y nfs-kernel-server nfs-common nfs4-acl-tools
@@ -434,7 +424,7 @@ systemctl status nfs-kernel-server
         CPU: 17ms
 ```
 Bien on a un service actif, moins bien il doit être configuré pour répondre aux différentes
-versions de NFS. On verifie et on arrange cela.
+versions de NFS. On verifie et on essaye arrange cela.
 
 ```bash
 cat /proc/fs/nfsd/version
@@ -444,24 +434,57 @@ cat /proc/fs/nfsd/version
 **Hmm sur Debian je ne trouve pas encore l'option pour
 désactiver les versions V3,V4,V4.1... chiant**
 
-Edition de /etc/exports
+Quoiqu'il en soit on va préparer les dossiers d'exports que nos chers amis linuxiens
+puisse mounter les systèmes de fichiers sur leurs machines.
+
+Edition de /etc/exports:
 ```txt
 # /etc/exports
-/mnt/raid       10.0.2.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
-/mnt/lvm        10.0.2.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
+/mnt/exports/raid       192.168.56.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
+/mnt/exports/lvm        192.168.56.0/24(rw,sync,no_root_squash,no_subtree_check,fsid=0,acl)
 ```
 
-Modification des droits sur les dossiers d'exports
+Modification des droits sur les dossiers d'exportation NFS
 ```bash
-chown -R nobody:nogroup /mnt/{raid,lvm}
-chmod -R 700 /mnt/{raid,lvm}
-ls -l /mnt
-total 0
-drwx------ 2 nobody nogroup 6 25 oct.  19:52 lvm
-drwx------ 2 nobody nogroup 6 25 oct.  19:18 raid
+chown nobody:nogroup /mnt/exports
+chmod -R 755 /mnt/exports
+chown -R nobody:Admin /mnt/exports/{raid,lvm}
+chmod -R 2775 /mnt/exports/{raid,lvm}
+```
+Le umask par défaut sur un système GNU/Linux est 022. En principe,
+pour le modifier il suffit de changer la valeur dans **/etc/login.defs**
+pour le mettre à 002. Nos utilisateurs n'ayant pas de groupe personnel
+dans le système et étant directement affecté au groupe *Admin* ou *User*
+on va pouvoir rapidement gérer l'ensemble des droits sur les partages sans se
+prendre la tête avec une gestion poussée des ACLs.
+
+**Remarque:** on ajoute aux fichiers
+*/etc/pam.d/{common-session,common-session-noninteractive}* **session optional pam_umask.so umask=0002**
+
+Enfin on relance tout le bouzin et on regarde:
+```bash
+systemctl restart nfs-server
+systemctl status nfs-server
+● nfs-server.service - NFS server and services
+     Loaded: loaded (/lib/systemd/system/nfs-server.service; enabled; preset: enabled)
+    Drop-In: /run/systemd/generator/nfs-server.service.d
+             └─order-with-mounts.conf
+     Active: active (exited) since Sat 2023-10-28 22:29:06 CEST; 9s ago
+    Process: 2599 ExecStartPre=/usr/sbin/exportfs -r (code=exited, status=0/SUCCESS)
+    Process: 2600 ExecStart=/usr/sbin/rpc.nfsd (code=exited, status=0/SUCCESS)
+   Main PID: 2600 (code=exited, status=0/SUCCESS)
+        CPU: 12ms
+
+oct. 28 22:29:06 nas systemd[1]: Starting nfs-server.service - NFS server and services...
+oct. 28 22:29:06 nas systemd[1]: Finished nfs-server.service - NFS server and services.
+
+showmount -e
+Export list for nas:
+/mnt/exports/lvm  192.168.56.0/24
+/mnt/exports/raid 192.168.56.0/24
 ```
 
-**Penser à voir les ACL avec l'export**
+**Great!!!**
 
 ### Installation de SAMBA
 ```bash
@@ -479,8 +502,11 @@ partages:
         guest ok = no
         valid users = @Admin @User
         write list = @Admin
-        create mask = 0113
-        directory mask = 0002
+        create mask = 2664
+        directory mask = 2775
+        force directory mode = 775
+        map acl inherit = yes
+        inherit acls = yes
 
 [LVM]
         comment = NAS LVM JBOD
@@ -490,10 +516,12 @@ partages:
         guest ok = no
         valid users = @Admin @User
         write list = @Admin
-        create mask = 0113
-        directory mask = 0002
+        create mask = 2664
+        directory mask = 2775
+        force directory mode = 775
+        map acl inherit = yes
+        inherit acls = yes
 ```
-**Il faut vérifier les mask**
 
 Création des utilisateurs dans la base
 ```
@@ -595,7 +623,108 @@ Bad password count  : 0
 Logon hours         : FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 ```
 
-**A finir**
+Enfin on teste les paramètres et on relance le serveur:
+```bash
+testparm
+Load smb config files from /etc/samba/smb.conf
+Loaded services file OK.
+Weak crypto is allowed by GnuTLS (e.g. NTLM as a compatibility fallback)
+
+Server role: ROLE_STANDALONE
+
+Press enter to see a dump of your service definitions
+
+# Global parameters
+[global]
+        log file = /var/log/samba/log.%m
+        logging = file
+        map to guest = Bad User
+        max log size = 1000
+        obey pam restrictions = Yes
+        pam password change = Yes
+        panic action = /usr/share/samba/panic-action %d
+        passwd chat = *Enter\snew\s*\spassword:* %n\n *Retype\snew\s*\spassword:* %n\n *password\supdated\ssuccessfully* .
+        passwd program = /usr/bin/passwd %u
+        server role = standalone server
+        unix password sync = Yes
+        usershare allow guests = Yes
+        idmap config * : backend = tdb
+
+
+[homes]
+        browseable = No
+        comment = Home Directories
+        create mask = 0700
+        directory mask = 0700
+        valid users = %S
+
+
+[printers]
+        browseable = No
+        comment = All Printers
+        create mask = 0700
+        path = /var/tmp
+        printable = Yes
+
+
+[print$]
+        comment = Printer Drivers
+        path = /var/lib/samba/printers
+
+
+[RAID]
+        comment = NAS RAID 6
+        create mask = 02664
+        directory mask = 02775
+        force directory mode = 0775
+        inherit acls = Yes
+        map acl inherit = Yes
+        path = /mnt/exports/raid
+        read only = No
+        valid users = @Admin @User
+        write list = @Admin
+
+
+[LVM]
+        comment = NAS LVM JBOD
+        create mask = 02664
+        directory mask = 02775
+        force directory mode = 0775
+        inherit acls = Yes
+        map acl inherit = Yes
+        path = /mnt/exports/lvm
+        read only = No
+        valid users = @Admin @User
+        write list = @Admin
+
+
+systemctl restart smbd.service
+systemctl status smbd
+● smbd.service - Samba SMB Daemon
+     Loaded: loaded (/lib/systemd/system/smbd.service; enabled; preset: enabled)
+     Active: active (running) since Sat 2023-10-28 22:13:41 CEST; 7s ago
+       Docs: man:smbd(8)
+             man:samba(7)
+             man:smb.conf(5)
+    Process: 2449 ExecCondition=/usr/share/samba/is-configured smb (code=exited, status=0/SUCCESS)
+    Process: 2452 ExecStartPre=/usr/share/samba/update-apparmor-samba-profile (code=exited, status=0/SUCCESS)
+   Main PID: 2461 (smbd)
+     Status: "smbd: ready to serve connections..."
+      Tasks: 4 (limit: 4640)
+     Memory: 6.7M
+        CPU: 203ms
+     CGroup: /system.slice/smbd.service
+             ├─2461 /usr/sbin/smbd --foreground --no-process-group
+             ├─2463 /usr/sbin/smbd --foreground --no-process-group
+             ├─2464 /usr/sbin/smbd --foreground --no-process-group
+             └─2465 /usr/sbin/smbd --foreground --no-process-group
+
+oct. 28 22:13:41 nas systemd[1]: Starting smbd.service - Samba SMB Daemon...
+oct. 28 22:13:41 nas systemd[1]: Started smbd.service - Samba SMB Daemon.
+oct. 28 22:13:41 nas smbd[2465]: pam_unix(samba:session): session opened for user clirrtiry(uid=1004) by (uid=0)
+```
+Comme nous pouvons le voir notre utilisateur clirrtiry n'a pas pu attendre et il s'est déjà connecté à notre
+super serveur SAMBA. **Un coquin ce clirrtiry**
 
 ## Configuration du système de réplication
 Apparement, rsync est le choix du chef! Donc on part là-dessus.
@@ -952,4 +1081,3 @@ Good JOB!!! 1Go de plus pour notre JBOD. Le client va vraiment être très conte
 de notre petite entreprise.
 
 ## TEST NFS / SAMBA / CIFS
-
