@@ -745,7 +745,7 @@ L'ensemble des éléments de ce test sont dans l'archive [cron-save](./reports/c
 5. restauration complète du NAS après désastre
 [Report 10231027-2129](./reports/report-restore-20231027-2129)
 
-## TEST RAID
+## TEST RAID (à remettre au client)
 Pour ce test on ne va pas passer par 4 chemins. On rends directement deux disques
 défaillants et on regarde si le RAID fait encore son travail.
 
@@ -862,7 +862,7 @@ sr0                11:0    1 1024M  0 rom
 
 Encore un super JOB
 
-## TEST LVM: ajout d'un disque
+## TEST LVM: ajout d'un disque (à remettre au client)
 
 On ajoute un disque de 1Go que l'on va intégrer à notre tas de ... LVM
 
@@ -951,6 +951,5 @@ tmpfs                       392M       0  392M   0% /run/user/1000
 Good JOB!!! 1Go de plus pour notre JBOD. Le client va vraiment être très content
 de notre petite entreprise.
 
-
-
+## TEST NFS / SAMBA / CIFS
 

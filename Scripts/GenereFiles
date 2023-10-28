@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Description: génère des dossiers et des fichiers quelconques
+#
+rep1=/mnt/exports/raid/
+rep2=/mnt/exports/lvm/
+
+for k in range $rep{1..2}; do
+    mkdir -p $k/dir{1..10}/dir{1..10}
+    touch $k/dir{1..10}/dir{1..10}/file{1..10}
+    touch $k/dir{1..10}/file{1..10}
+    touch $k/file{1..10}
+done
+exit 0
