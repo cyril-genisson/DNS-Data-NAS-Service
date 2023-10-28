@@ -47,14 +47,15 @@ Serveur de Backup:
     - rsync pour la gestion des sauvegardes
 
 En analysant les besoins, on peut rapidement remarquer où sont les points de
-défaillance critiques:
-- le système d'exploitation n'est pas protégé (2 JBOSS en raid 1 auraient été mieux),
+défaillance critique:
+- le système d'exploitation n'est pas protégé (2 JBOSS en raid 1 auraient été mieux);
 - le raid 6 tolère 2 disques en échec au maximum et ramène la dimension du stockage à 15Go au lieu des 21
-initialement prévu,
-- les 3 disques de 1To en bonus ne servent à rien car non intégrable au raid par la suite. Si le client vient
+initialement prévus;
+- les 3 disques de 1To en bonus ne servent à rien car non intégrables au raid par la suite. Si le client vient
 à s'en servir (et il le fera) il n'aura aucune solution de secours hormis ce deuxième NAS-Backup qui ne sert à rien
-puisque lui aussi aura vieillit en même temps que le premier (hmm, obsolescence programmée quand tu nous tiens).
+puisque lui aussi aura vieilli en même temps que le premier (hmm, obsolescence programmée quand tu nous tiens).
 - pas de redondance de la carte réseau avec failover en cas de défaut d'une des deux interfaces.
+
 La conclusion de ce merveilleux travail, avant même de l'avoir commencé, c'est que le client finira par se retourner
 contre notre prometteuse petite PME, et tout cela parce que Paul nous demande de faire de la m....
 
@@ -71,14 +72,14 @@ Bon, c'est le chef! Et puisque l'on obéit au chef, alors au travail!!!
 - Pas d'utilisateur root
 - Un utilisateur -> Kaman kaman G:kaman,sudo
 
-L'installation de la première machine étant terminée on ajoute l'ensembles
+L'installation de la première machine étant terminée on ajoute l'ensemble
 des disques:
 - 7 * 3Go pour le RAID 6
 - 3 * 1Go pour le LVM
 
 ![ConfigNasVB](./pictures/ConfigNasVB.jpg "Configuration de la machine virtuelle NAS")
 
-Une fois terminé l'installation de cette première machine, on la clone intégralement
+Une fois terminée l'installation de cette première machine, on la clone intégralement
 en veillant à changer les adresses MAC et en conserver le nom et les UUIDs des disques.
 
 On finit enfin par installer un serveur ssh sur chaque machine pour gérer l'installation
@@ -100,7 +101,7 @@ systemctl status ssh
              └─582 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
 ```
 
-Super! Une bonne chose de faite. On installe à présent deux trois outils indispensables
+Super! Une bonne chose de faite. On installe à présent deux/trois outils indispensables
 pour se sentir à la maison.
 
 ```bash
@@ -166,7 +167,7 @@ mdadm --create /dev/md0 --level=6 --raid-device=7 /dev/sd{b..h}1
 mdadm: Defaulting to version 1.2 metadata
 mdadm: array /dev/md0 started.
 
-# Et on vérifie encore une fois que tout c'est bien passé
+# Et on vérifie encore une fois que tout s'est bien passé
 cat /proc/mdstat
 Personalities : [raid6] [raid5] [raid4]
 md0 : active raid6 sdh1[6] sdg1[5] sdf1[4] sde1[3] sdd1[2] sdc1[1] sdb1[0]
@@ -213,9 +214,9 @@ Consistency Policy : resync
 
 - En finir avec cette partie:
 
-Le client n'ayant pas tranché pour le système de fichier, nous partons sur un XFS. On pourra faire un dump
-du système de fichier par la suite pour l'envoyer directement sur un serveur de bandes au cas où notre
-client et Paul deviendraient plus raisonables.
+Le client n'ayant pas tranché pour le système de fichiers, nous partons sur un XFS. On pourra faire un dump
+du système de fichiers par la suite pour l'envoyer directement sur un serveur de bandes au cas où notre
+client et Paul deviendraient plus raisonnables.
 ```bash
 # Formatage XFS
 mkfs.xfs /dev/md0
@@ -252,7 +253,7 @@ mount | grep md0
 
 
 ## Le JBOD à présent
-Précédement nous avions déjà préparé les disques, il ne reste plus qu'à fabriquer le tas de .....
+Précédemment nous avions déjà préparé les disques, il ne reste plus qu'à fabriquer le tas de .....
 
 ```bash
 pvcreate /dev/sd{i..k}1
@@ -316,7 +317,7 @@ tmpfs                       392M       0  392M   0% /run/user/1000
 ```
 
 ## NFS & SAMBA/CIFS
-Alors là c'est le pompon!!! Quitte à continuer à faire des cochoneries je vais tranquillement commencer par
+Alors là c'est le pompon!!! Quitte à continuer à faire des cochonneries je vais tranquillement commencer par
 me faire un café. Je reviens dans deux minutes...
 
 ...
@@ -325,7 +326,7 @@ me faire un café. Je reviens dans deux minutes...
 
 ...
 
-J'espère que je n'ai pas étais trop long.
+J'espère que je n'ai pas été trop long.
 Avant de faire quoi que ce soit nous allons rapidement créer nos petits utilisateurs à partir d'un fichier csv
 préparé aux petits oignons:
 ```csv
@@ -423,8 +424,8 @@ systemctl status nfs-kernel-server
    Main PID: 19114 (code=exited, status=0/SUCCESS)
         CPU: 17ms
 ```
-Bien on a un service actif, moins bien il doit être configuré pour répondre aux différentes
-versions de NFS. On verifie et on essaye arrange cela.
+Bien, on a un service actif, moins bien il doit être configuré pour répondre aux différentes
+versions de NFS. On vérifie et on essaye d'arrange cela.
 
 ```bash
 cat /proc/fs/nfsd/version
@@ -435,7 +436,7 @@ cat /proc/fs/nfsd/version
 désactiver les versions V3,V4,V4.1... chiant**
 
 Quoiqu'il en soit on va préparer les dossiers d'exports que nos chers amis linuxiens
-puisse mounter les systèmes de fichiers sur leurs machines.
+puissent *mounter* les systèmes de fichiers sur leurs machines.
 
 Edition de /etc/exports:
 ```txt
@@ -723,23 +724,23 @@ oct. 28 22:13:41 nas systemd[1]: Starting smbd.service - Samba SMB Daemon...
 oct. 28 22:13:41 nas systemd[1]: Started smbd.service - Samba SMB Daemon.
 oct. 28 22:13:41 nas smbd[2465]: pam_unix(samba:session): session opened for user clirrtiry(uid=1004) by (uid=0)
 ```
-Comme nous pouvons le voir notre utilisateur clirrtiry n'a pas pu attendre et il s'est déjà connecté à notre
+Comme nous pouvons le voir, notre utilisateur clirrtiry n'a pas pu attendre et il s'est déjà connecté à notre
 super serveur SAMBA. **Un coquin ce clirrtiry**
 
 ## Configuration du système de réplication
 Apparement, rsync est le choix du chef! Donc on part là-dessus.
 Deux options s'offrent à nous. Faisons nous le mirroir en mode
 PUSH ou PULL? D'autre part à quelle fréquence? Est-ce le client 
-qui désidera  de ce point ou bien est-ce que je dois prendre 
+qui décidera  de ce point ou bien est-ce que je dois prendre 
 une initiative?
 
 Bon, puisque l'on est obligé de trancher rapidement, je fais partir
-sur un mode PULL avec une fréquence de 1 minutes pour les essais.
+sur un mode PULL avec une fréquence de 1 minute pour les essais.
 
 Néanmoins, le client va être déçu car si pour une raison quelconque
 il souhaite récupérer un fichier perdu accidentellement et bien
 ce n'est pas en allant voir son NAS-(BACKUP) qu'il va pouvoir le
-retrouver. Cela lui permet juste d'être redondant en cas de défaillance
+retrouver. Cela lui permettra juste d'être redondant en cas de défaillance
 majeur du NAS principal.
 
 - Création d'un utilisateur de sauvegarde *backuprsync* appartenant au groupe *sudo*
@@ -756,7 +757,7 @@ chown -R backuprsync:backuprsync ~backuprsync/.ssh
 
 On a généré une paire de clefs SSH que l'on a mis sur les deux
 machines pour l'utilisateur *backuprsync* pour que rsync puisse se connecter sans mot
-passe. Evidement, on a copié la clef public dans le fichier authorized_keys.
+passe. Evidemment, on a copié la clef publique dans le fichier authorized_keys.
 Enfin on a mis la commande sudo sans mot de passe pour tous les membres du groupe
 **sudo**. En fonction de la politique de sécurité il sera toujours temps d'effectuer
 un petit réglage sur ce point.
@@ -827,7 +828,7 @@ exit 0
 ```
 
 ## TEST RSYNC (à remettre au client)
-Paramètre pour les tests:
+Paramètres pour les tests:
 - nas: 192.168.56.101/24
 - nas-backup: 192.168.56.103/24
 
@@ -875,7 +876,7 @@ L'ensemble des éléments de ce test sont dans l'archive [cron-save](./reports/c
 [Report 10231027-2129](./reports/report-restore-20231027-2129)
 
 ## TEST RAID (à remettre au client)
-Pour ce test on ne va pas passer par 4 chemins. On rends directement deux disques
+Pour ce test on ne va pas passer par 4 chemins. On rend directement deux disques
 défaillants et on regarde si le RAID fait encore son travail.
 
 ```bash
@@ -989,9 +990,9 @@ sdk                 8:160  0    1G  0 disk
 sr0                11:0    1 1024M  0 rom
 ```
 
-Encore un super JOB
+Encore un super JOB!!!
 
-## TEST LVM: ajout d'un disque (à remettre au client)
+## TEST JBOD: ajout d'un disque (à remettre au client)
 
 On ajoute un disque de 1Go que l'on va intégrer à notre tas de ... LVM
 
