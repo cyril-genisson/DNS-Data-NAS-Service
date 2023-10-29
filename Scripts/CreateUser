@@ -30,9 +30,9 @@ do
         # Création du compte et affectation au groupe
         echo "Création de l'utilisateur $ACCTNAME $ROLE"
         if [ "$ROLE" = "Admin" ] ; then
-        useradd -c "$FIRSTNAME $LASTNAME" -g Admin -s /usr/sbin/nologin $ACCTNAME
+            useradd -c "$FIRSTNAME $LASTNAME" -g Admin -s /usr/sbin/nologin $ACCTNAME
         else
-        useradd -c "$FIRSTNAME $LASTNAME" -g User -s /usr/sbin/nologin $ACCTNAME
+            useradd -c "$FIRSTNAME $LASTNAME" -g User -s /usr/sbin/nologin $ACCTNAME
         fi
         echo "$ACCTNAME:abcd" | chpasswd
         echo "$ACCTNAME $PASSWD $ROLE" >> create.txt
