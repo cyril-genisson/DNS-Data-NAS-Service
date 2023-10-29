@@ -1081,4 +1081,20 @@ tmpfs                       392M       0  392M   0% /run/user/1000
 Good JOB!!! 1Go de plus pour notre JBOD. Le client va vraiment être très content
 de notre petite entreprise.
 
-## TEST NFS / SAMBA / CIFS
+## TEST NFS / SAMBA / CIFS (à remettre au client)
+### Méthodologie employée
+Pour ce dernier test:
+- mettre un interpréteur shell aux utilisateurs clirrtiry(Admin) et jeddie(User);
+- créer deux répertoires que root monte avec les protocoles CIFS / NFS:
+    - /mnt/cifs (option de montage: mount -t cifs -o username=jeddie,password=abcd,gid=10001,file_mode=2664,dir_mode=2775 "\\\192.168.56.101\raid" /mnt/cifs )
+    - /mnt/nfs (option de montage: mount -t nfs 192.168.56.101:/mnt/exports/raid )
+- root prendra les rôles alternativement de jeddie et clirrtiry pour faire les tests sur un le serveur.
+
+### Compte rendu pour la gestion des droits
+Le compte rendu pour la gestion des droits est directement fait dans la vidéo mise à disposition pour le client.
+[Test: Gestion des droits utilisateurs](./reports/test-droits-users.mp4 "Droits utilisateur")
+
+
+## En résumé
+Un travail amusant. Le plus long restant le faire de faire ce foutu compte-rendu...
+Merci d'avoir eu la patience et surtout pris le temps de lire ma prose pas toujours très à propos!!!
