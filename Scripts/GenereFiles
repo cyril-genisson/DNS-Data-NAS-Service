@@ -5,7 +5,7 @@
 rep1=/mnt/exports/raid/
 rep2=/mnt/exports/lvm/
 
-for k in range $rep{1..2}; do
+for k in $rep{1..2}; do
     mkdir -p $k/dir{1..10}/dir{1..10}
     touch $k/dir{1..10}/dir{1..10}/file{1..10}
     touch $k/dir{1..10}/file{1..10}
